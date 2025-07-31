@@ -8,3 +8,8 @@ dependencies = [
     "llama-cpp-python>=0.3.14",
     "tcod>=19.3.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.7",
+]
