@@ -181,7 +181,7 @@ wheels = [
 [[package]]
 name = "rlt2025"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "llama-cpp-python" },
     { name = "tcod" },
