@@ -12,14 +12,20 @@ class EntityMovedEvent:
 
 
 @dataclass
-class RenderFrameEvent:
-    # Triggered when a frame needs to be rendered
+class BeforeFrameRenderEvent:
+    # Triggered before rendering a frame
     pass
 
 
 @dataclass
-class FrameRenderedEvent:
+class AfterFrameRenderEvent:
     # Triggered after a frame has been rendered
+    pass
+
+
+@dataclass
+class RenderFrameEvent:
+    # Indicates a frame needs to be rendered
     pass
 
 

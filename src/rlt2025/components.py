@@ -31,13 +31,15 @@ class Player:
 
 
 @dataclass
-class TileMap:
-    width: int
-    height: int
-    tiles: np.ndarray
-
-
-@dataclass
 class ScheduledEvent:
     tick: int
     event: object
+
+
+@dataclass
+class VisibilityInfo:
+    compute_explored: bool = True
+    dirty: bool = True
+    sight_radius: int = 10
+    visible: Optional[np.ndarray] = None
+    explored: Optional[np.ndarray] = None

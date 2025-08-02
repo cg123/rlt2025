@@ -4,7 +4,7 @@ import tcod
 from rlt2025.ecs import World
 from rlt2025.engine import Engine
 from rlt2025.map import generate_dungeon
-from rlt2025.components import Player, Position, Renderable
+from rlt2025.components import Player, Position, Renderable, VisibilityInfo
 
 
 TILESET = tcod.tileset.load_tilesheet(
@@ -32,6 +32,7 @@ def main() -> None:
     world.entities.add_component(player, Player())
     world.entities.add_component(player, Position(x=start_x, y=start_y))
     world.entities.add_component(player, Renderable(text="@", fg=(255, 255, 255)))
+    world.entities.add_component(player, VisibilityInfo())
 
     npc = world.entities.create_entity()
     world.entities.add_component(
