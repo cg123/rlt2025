@@ -37,9 +37,12 @@ class MovementAction(Action):
         dest_x = pos_0.x + self.dx
         dest_y = pos_0.y + self.dy
 
-        if not world.game_map.in_bounds(dest_x, dest_y):
+        if not world.realm.in_bounds(dest_x, dest_y):
             return
-        if not world.game_map.tiles["walkable"][dest_x, dest_y]:
+        if (
+            not (tile_data := world.realm.get_tile(dest_x, dest_y))
+            or not tile_data.walkable
+        ):
             return
 
         # Move the entity to the new position

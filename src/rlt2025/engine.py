@@ -1,10 +1,10 @@
 import logging
 from typing import Any, Iterable
+
 import tcod
 
-from rlt2025.components import Renderable, VisibilityInfo
-from rlt2025.components import Player, Position
-from rlt2025.ecs import World, Entity
+from rlt2025.components import Player, Position, Renderable, VisibilityInfo
+from rlt2025.ecs import Entity, World
 from rlt2025.events import AfterFrameRenderEvent, BeforeFrameRenderEvent
 from rlt2025.input_handlers import EventHandler
 from rlt2025.systems.visibility import VisibilitySystem
@@ -59,7 +59,7 @@ class Engine:
         if visibility.dirty:
             raise ValueError("VisibilityInfo is dirty at render time.")
 
-        self.world.game_map.render(
+        self.world.realm.render(
             console, visible=visibility.visible, explored=visibility.explored
         )
 

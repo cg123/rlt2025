@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import NamedTuple, Tuple
 
 import numpy as np  # type: ignore
 
@@ -22,12 +22,25 @@ tile_dt = np.dtype(
 )
 
 
+class GraphicTuple(NamedTuple):
+    char: int
+    fg: Tuple[int, int, int]
+    bg: Tuple[int, int, int]
+
+
+class TileData(NamedTuple):
+    walkable: bool
+    transparent: bool
+    dark: GraphicTuple
+    light: GraphicTuple
+
+
 def new_tile(
     *,  # Enforce the use of keywords, so that parameter order doesn't matter.
     walkable: int,
     transparent: int,
-    dark: Tuple[int, Tuple[int, int, int], Tuple[int, int, int]],
-    light: Tuple[int, Tuple[int, int, int], Tuple[int, int, int]],
+    dark: GraphicTuple,
+    light: GraphicTuple,
 ) -> np.ndarray:
     """Helper function for defining individual tile types"""
     return np.array((walkable, transparent, dark, light), dtype=tile_dt)
@@ -39,12 +52,28 @@ SHROUD = np.array((ord(" "), (255, 255, 255), (0, 0, 0)), dtype=graphic_dt)
 floor = new_tile(
     walkable=True,
     transparent=True,
-    dark=(ord(" "), (255, 255, 255), (50, 50, 150)),
-    light=(ord(" "), (255, 255, 255), (200, 200, 250)),
+    dark=GraphicTuple(
+        char=ord(" "),
+        fg=(255, 255, 255),
+        bg=(50, 50, 150),
+    ),
+    light=GraphicTuple(
+        char=ord(" "),
+        fg=(255, 255, 255),
+        bg=(200, 200, 250),
+    ),
 )
 wall = new_tile(
     walkable=False,
     transparent=False,
-    dark=(ord(" "), (255, 255, 255), (0, 0, 100)),
-    light=(ord(" "), (255, 255, 255), (130, 130, 130)),
+    dark=GraphicTuple(
+        char=ord(" "),
+        fg=(255, 255, 255),
+        bg=(0, 0, 100),
+    ),
+    light=GraphicTuple(
+        char=ord(" "),
+        fg=(255, 255, 255),
+        bg=(130, 130, 130),
+    ),
 )

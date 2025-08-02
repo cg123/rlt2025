@@ -1,8 +1,9 @@
 import numpy as np
 import tcod
+
 from rlt2025.components import Position, VisibilityInfo
 from rlt2025.ecs import World
-from rlt2025.events import EntityMovedEvent, BeforeFrameRenderEvent
+from rlt2025.events import BeforeFrameRenderEvent, EntityMovedEvent
 
 
 class VisibilitySystem:
@@ -17,22 +18,26 @@ class VisibilitySystem:
             vis.dirty = True
 
     def update_visibility(self, event: BeforeFrameRenderEvent, world: World) -> None:
+        assert world.realm.chunk is not None, (
+            "Realm chunk must be initialized before updating visibility."
+        )
+
         for entity, pos, vis in world.entities.query(Position, VisibilityInfo):
             if vis.dirty:
                 vis.dirty = False
 
                 if (
                     vis.visible is None
-                    or vis.visible.shape != world.game_map.tiles["transparent"].shape
+                    or vis.visible.shape != world.realm.chunk.tiles["transparent"].shape
                 ):
                     vis.visible = np.full_like(
-                        world.game_map.tiles["transparent"],
+                        world.realm.chunk.tiles["transparent"],
                         False,
                         dtype=bool,
                     )
 
                 vis.visible = tcod.map.compute_fov(
-                    transparency=world.game_map.tiles["transparent"],
+                    transparency=world.realm.chunk.tiles["transparent"],
                     pov=(pos.x, pos.y),
                     radius=vis.sight_radius,
                 )
@@ -40,10 +45,10 @@ class VisibilitySystem:
                     if (
                         vis.explored is None
                         or vis.explored.shape
-                        != world.game_map.tiles["transparent"].shape
+                        != world.realm.chunk.tiles["transparent"].shape
                     ):
                         vis.explored = np.full_like(
-                            world.game_map.tiles["transparent"],
+                            world.realm.chunk.tiles["transparent"],
                             False,
                             dtype=bool,
                         )

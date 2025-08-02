@@ -1,16 +1,16 @@
 from rlt2025.ecs.entity_registry import EntityRegistry
 from rlt2025.ecs.event_bus import EventBus
-from rlt2025.map import GameMap
+from rlt2025.map import Realm
 
 
 class World:
     entities: EntityRegistry
     event_bus: EventBus
-    game_map: GameMap
     tick_count: int
+    realm: Realm
 
-    def __init__(self, game_map: GameMap):
+    def __init__(self):
         self.entities = EntityRegistry()
         self.event_bus = EventBus()
-        self.game_map = game_map
         self.tick_count = 0
+        self.realm = Realm()
