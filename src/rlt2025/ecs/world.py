@@ -1,6 +1,6 @@
 from rlt2025.ecs.entity_registry import EntityRegistry
 from rlt2025.ecs.event_bus import EventBus
-from rlt2025.game_map import GameMap
+from rlt2025.map import GameMap
 
 
 class World:

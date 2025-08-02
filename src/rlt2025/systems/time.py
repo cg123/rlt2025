@@ -24,7 +24,10 @@ class TimeSystem:
         if min_ent is not None:
             c = world.entities.get_component(min_ent, ScheduledEvent)
             assert c is not None, "ScheduledEvent component is None"
+
+            # slap that bad boy into the event bus
             world.event_bus.post(c.event)
+
             if c.tick > current_tick:
                 world.tick_count = c.tick
                 elapsed = c.tick - current_tick

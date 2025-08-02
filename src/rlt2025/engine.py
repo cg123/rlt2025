@@ -34,6 +34,9 @@ class Engine:
     ) -> None:
         console.clear()
         self.world.game_map.render(console)
-        for _entity, pos, r in self.world.entities.query(Position, Renderable):
+
+        renderables = list(self.world.entities.query(Position, Renderable))
+        renderables.sort(key=lambda r: r[2].layer)
+        for _entity, pos, r in renderables:
             console.print(x=pos.x, y=pos.y, text=r.text, fg=r.fg, bg=r.bg)
         context.present(console)
