@@ -1,0 +1,11 @@
+# A basic small room blueprint for dungeon generation
+id: small_room
+tags: ["room", "small", "dungeon_room"]
+legend:
+  "#": "wall"   # Solid stone walls
+  ".": "floor"  # Walkable floor tiles
+rows:
+  - "#####"  # North wall
+  - "#...#"  # Side walls with interior space
+  - "#...#"  # Side walls with interior space  
+  - "#####"  # South wall

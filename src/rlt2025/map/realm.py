@@ -1,113 +1,126 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 from tcod.console import Console
 
-from rlt2025.components import Player, Position, Renderable, VisibilityInfo
-from rlt2025.map.simple_dungeon import generate_dungeon
-from rlt2025.map.tile_types import SHROUD, TileData
+from rlt2025.events import ChunkActivateRequestEvent, ChunkDeactivateRequestEvent
+from rlt2025.map.chunks import CHUNK_DEPTH, CHUNK_SIZE
+from rlt2025.map.chunks import Chunk as NewChunk
+from rlt2025.map.chunks import ChunkKey, world_to_chunk
+from rlt2025.map.tile_types import SHROUD
+from rlt2025.map.tiles import TileRegistry
 
 if TYPE_CHECKING:
-    from rlt2025.ecs import Entity, World
+    from rlt2025.ecs import World
 
 
 @dataclass
-class Chunk:
-    coords: tuple[int, int]  # (x, y) coordinates of top-left corner
-    tiles: np.ndarray
-    entities: set["Entity"] = field(default_factory=set)
-
-
 class Realm:
-    # placeholder for now - just a single screen-sized chunk
-    # in the future, this will be a collection of chunks that can be loaded/unloaded
-    # as the player moves around the world
+    """
+    Realm with integrated chunk management and tile registry support.
+    """
+
     width: int
     height: int
-    chunk: Optional[Chunk] = None
+    tiles: TileRegistry = field(default_factory=TileRegistry)
+    chunks: dict[ChunkKey, NewChunk] = field(default_factory=dict)
 
-    def __init__(self):
-        self.width = 0
-        self.height = 0
+    def __post_init__(self):
+        self._setup_default_tiles()
 
-    def generate(self, world: "World", width: int, height: int) -> None:
-        """Generate the initial chunk for the realm."""
-
-        self.width = width
-        self.height = height
-
-        tiles, player_pos = generate_dungeon(
-            width=self.width,
-            height=self.height,
-            max_rooms=30,
-            room_min_size=5,
-            room_max_size=10,
+    def _setup_default_tiles(self):
+        """Set up basic tile types for the generation system."""
+        self.tiles.register_new(
+            "void", " ", (0, 0, 0), (0, 0, 0), blocks_move=True, blocks_sight=True
         )
-        self.chunk = Chunk(
-            coords=(0, 0),
-            tiles=tiles,
+        self.tiles.register_new(
+            "floor",
+            ".",
+            (130, 110, 50),
+            (20, 20, 20),
+            blocks_move=False,
+            blocks_sight=False,
         )
-
-        player_entity = world.entities.create_entity()
-        world.entities.add_component(
-            player_entity, Position(x=player_pos[0], y=player_pos[1])
+        self.tiles.register_new(
+            "wall", "#", (0, 100, 0), (0, 40, 0), blocks_move=True, blocks_sight=True
         )
-        world.entities.add_component(
-            player_entity,
-            Player(),
+        self.tiles.register_new(
+            "door",
+            "+",
+            (130, 110, 50),
+            (20, 20, 20),
+            blocks_move=False,
+            blocks_sight=False,
         )
-        world.entities.add_component(
-            player_entity, Renderable(text="@", fg=(255, 255, 255), bg=None, layer=1)
-        )
-        world.entities.add_component(
-            player_entity,
-            VisibilityInfo(compute_explored=True, dirty=True, sight_radius=10),
-        )
-
-        self.chunk.entities.add(player_entity)
 
     def render(
         self, console: Console, visible: np.ndarray, explored: np.ndarray
     ) -> None:
-        if self.chunk is None:
-            raise ValueError("Realm chunk is not initialized.")
+        if not self.chunks:
+            return
+        # This render method will need to be updated to handle multiple chunks if the viewport is larger than one chunk
+        # For now, we assume the viewport is within a single chunk
+        visible_tiles = np.full(
+            (self.width, self.height), fill_value=self.tiles.id("void"), order="F"
+        )
+        for x in range(self.width):
+            for y in range(self.height):
+                visible_tiles[x, y] = self.read_tile(x, y)
+
+        light_tiles = np.array(
+            [self.tiles.get(tile_id).light for tile_id in visible_tiles.flatten()],
+            dtype=SHROUD.dtype,
+        ).reshape(visible_tiles.shape)
+        dark_tiles = np.array(
+            [self.tiles.get(tile_id).dark for tile_id in visible_tiles.flatten()],
+            dtype=SHROUD.dtype,
+        ).reshape(visible_tiles.shape)
+
         console.rgb[0 : self.width, 0 : self.height] = np.select(
             condlist=[
                 visible,
                 explored,
             ],
             choicelist=[
-                self.chunk.tiles["light"],
-                self.chunk.tiles["dark"],
+                light_tiles,
+                dark_tiles,
             ],
-            default=SHROUD,
+            default=np.full((self.width, self.height), fill_value=SHROUD, order="F"),
         )
 
-    def get_tile(self, x: int, y: int) -> Optional[TileData]:
-        """Get the tile at the given coordinates."""
-        if self.chunk is None:
-            raise ValueError("Realm chunk is not initialized.")
-        if not self.in_bounds(x, y):
-            return None
-        res = self.chunk.tiles[x, y]
-        return TileData(
-            walkable=res["walkable"],
-            transparent=res["transparent"],
-            dark=res["dark"],
-            light=res["light"],
-        )
+    def read_tile(self, x: int, y: int, z: int = 0) -> int:
+        """Read a tile ID at world coordinates."""
+        chunk_key, (lx, ly, lz) = world_to_chunk(x, y, z)
+        if chunk_key in self.chunks:
+            chunk = self.chunks[chunk_key]
+            return chunk.get_local(lx, ly, lz)
 
-    def set_tile(self, x: int, y: int, tile_data: TileData) -> None:
-        """Set the tile at the given coordinates."""
-        if self.chunk is None:
-            raise ValueError("Realm chunk is not initialized.")
-        if not self.in_bounds(x, y):
-            raise ValueError(f"Coordinates ({x}, {y}) are out of bounds.")
-        self.chunk.tiles[x, y] = tile_data
+        return self.tiles.id("void")
+
+    def write_tile(self, x: int, y: int, z: int, tile_id: int) -> None:
+        """Write a tile ID at world coordinates."""
+        chunk_key, (lx, ly, lz) = world_to_chunk(x, y, z)
+        chunk = self.get_or_create_chunk(chunk_key)
+        chunk.set_local(lx, ly, lz, tile_id)
 
     def in_bounds(self, x: int, y: int) -> bool:
         """Return True if x and y are inside of the bounds of this realm."""
-        if self.chunk is None:
-            raise ValueError("Realm chunk is not initialized.")
-        return 0 <= x < self.chunk.tiles.shape[0] and 0 <= y < self.chunk.tiles.shape[1]
+        return 0 <= x < self.width and 0 <= y < self.height
+
+    def get_or_create_chunk(self, chunk_key: ChunkKey) -> NewChunk:
+        """Get or create a chunk at the given key."""
+        if chunk_key not in self.chunks:
+            self.chunks[chunk_key] = NewChunk(
+                key=chunk_key,
+                tiles=[self.tiles.id("void")] * (CHUNK_SIZE * CHUNK_SIZE * CHUNK_DEPTH),
+            )
+        return self.chunks[chunk_key]
+
+    def activate_chunk(self, chunk_key: ChunkKey, world: "World") -> None:
+        """Request chunk activation via event bus."""
+        world.event_bus.post(ChunkActivateRequestEvent(chunk_key=chunk_key))
+
+    def deactivate_chunk(self, chunk_key: ChunkKey, world: "World") -> None:
+        """Request chunk deactivation via event bus."""
+        world.event_bus.post(ChunkDeactivateRequestEvent(chunk_key=chunk_key))

@@ -39,10 +39,8 @@ class MovementAction(Action):
 
         if not world.realm.in_bounds(dest_x, dest_y):
             return
-        if (
-            not (tile_data := world.realm.get_tile(dest_x, dest_y))
-            or not tile_data.walkable
-        ):
+        tile_id = world.realm.read_tile(dest_x, dest_y)
+        if not world.realm.tiles.get(tile_id).blocks_move:
             return
 
         # Move the entity to the new position

@@ -1,7 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from rlt2025.ecs import Entity
+
+if TYPE_CHECKING:
+    from rlt2025.map.chunks import ChunkKey
 
 
 @dataclass
@@ -48,3 +51,17 @@ class TurnCompletedEvent:
 @dataclass
 class TimeElapsedEvent:
     elapsed_ticks: int
+
+
+@dataclass
+class ChunkActivateRequestEvent:
+    """Request to activate a chunk (materialize entities)."""
+
+    chunk_key: "ChunkKey"
+
+
+@dataclass
+class ChunkDeactivateRequestEvent:
+    """Request to deactivate a chunk (cleanup entities)."""
+
+    chunk_key: "ChunkKey"

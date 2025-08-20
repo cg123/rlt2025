@@ -18,37 +18,43 @@ class VisibilitySystem:
             vis.dirty = True
 
     def update_visibility(self, event: BeforeFrameRenderEvent, world: World) -> None:
-        assert world.realm.chunk is not None, (
-            "Realm chunk must be initialized before updating visibility."
-        )
-
         for entity, pos, vis in world.entities.query(Position, VisibilityInfo):
             if vis.dirty:
                 vis.dirty = False
 
-                if (
-                    vis.visible is None
-                    or vis.visible.shape != world.realm.chunk.tiles["transparent"].shape
+                if vis.visible is None or vis.visible.shape != (
+                    world.realm.width,
+                    world.realm.height,
                 ):
-                    vis.visible = np.full_like(
-                        world.realm.chunk.tiles["transparent"],
+                    vis.visible = np.full(
+                        (world.realm.width, world.realm.height),
                         False,
                         dtype=bool,
                     )
 
+                transparency = np.full(
+                    (world.realm.width, world.realm.height),
+                    fill_value=True,
+                    order="F",
+                )
+                for x in range(world.realm.width):
+                    for y in range(world.realm.height):
+                        transparency[x, y] = not world.realm.tiles.get(
+                            world.realm.read_tile(x, y)
+                        ).blocks_sight
+
                 vis.visible = tcod.map.compute_fov(
-                    transparency=world.realm.chunk.tiles["transparent"],
+                    transparency=transparency,
                     pov=(pos.x, pos.y),
                     radius=vis.sight_radius,
                 )
                 if vis.compute_explored:
-                    if (
-                        vis.explored is None
-                        or vis.explored.shape
-                        != world.realm.chunk.tiles["transparent"].shape
+                    if vis.explored is None or vis.explored.shape != (
+                        world.realm.width,
+                        world.realm.height,
                     ):
-                        vis.explored = np.full_like(
-                            world.realm.chunk.tiles["transparent"],
+                        vis.explored = np.full(
+                            (world.realm.width, world.realm.height),
                             False,
                             dtype=bool,
                         )

@@ -1,0 +1,17 @@
+id: stone_house_basic
+tags: ["building", "house", "stone_wall"]
+legend:
+  "#": "wall"
+  ".": "floor"
+  "+": "floor"  # Doors are entities now
+rows:
+  - "#######"
+  - "#.....#"
+  - "+.....#"
+  - "#.....#"
+  - "#######"
+entities:
+  - label: "front_door"
+    pos: [0, 2, 0]
+    components: []
+    tags: ["door", "entrance"]

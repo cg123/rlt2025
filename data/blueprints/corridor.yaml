@@ -1,0 +1,9 @@
+id: corridor_horizontal
+tags: ["corridor", "horizontal", "dungeon"]
+legend:
+  "#": "wall"
+  ".": "floor"
+rows:
+  - "########"
+  - "........"
+  - "########"
