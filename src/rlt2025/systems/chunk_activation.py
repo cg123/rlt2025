@@ -22,8 +22,15 @@ def materialize_chunk_spawns(chunk: "Chunk", world: "World") -> None:
     if not chunk.spawns:
         return  # Nothing to do
 
+    # Skip if already materialized to avoid duplicate entities
+    if chunk.materialized_entities:
+        return  # Already materialized
+
     for world_pos, spawn in chunk.spawns:
-        components = [spawn.stable_id, Position(world_pos.x, world_pos.y)]
+        # Combine anchor world position with spawn's local offset for final placement
+        final_x = world_pos.x + getattr(spawn.local_pos, "x", 0)
+        final_y = world_pos.y + getattr(spawn.local_pos, "y", 0)
+        components = [spawn.stable_id, Position(final_x, final_y)]
         for comp_factory in spawn.components:
             components.append(comp_factory())
         entity_id = world.create_entity(*components)
@@ -46,16 +53,18 @@ def cleanup_chunk_entities(chunk: "Chunk", world: "World") -> None:
 
     # Clear the materialized entities set
     chunk.materialized_entities.clear()
+    # Do not clear chunk.spawn_guids or chunk.spawns; reactivation relies on them
 
 
 class ChunkActivationSystem:
     """ECS system that handles chunk activation/deactivation via events."""
 
     def __init__(self, world: "World"):
-        world.event_bus.subscribe(
+        # Register handlers with the EventBus API
+        world.event_bus.register(
             ChunkActivateRequestEvent, self._handle_activate_request
         )
-        world.event_bus.subscribe(
+        world.event_bus.register(
             ChunkDeactivateRequestEvent, self._handle_deactivate_request
         )
 
@@ -77,6 +86,6 @@ class ChunkActivationSystem:
         realm = getattr(world, "realm", None)
         if realm and event.chunk_key in realm.chunks:
             chunk = realm.chunks[event.chunk_key]
+            # Clean up entities but keep the chunk data resident so that
+            # re-activation can restore entities without forcing regeneration.
             cleanup_chunk_entities(chunk, world)
-            # Remove the chunk from memory
-            del realm.chunks[event.chunk_key]

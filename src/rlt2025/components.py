@@ -30,6 +30,18 @@ class Player:
     pass
 
 
+@dataclass(frozen=True)
+class StableId:
+    """
+    A stable, unique identifier for an entity that persists across saves.
+
+    Used for deferred entity references during procedural generation
+    and for maintaining entity identity across world changes.
+    """
+
+    guid: str
+
+
 @dataclass
 class ScheduledEvent:
     tick: int

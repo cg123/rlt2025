@@ -34,13 +34,17 @@ class MovementAction(Action):
         if pos_0 is None:
             return
 
-        dest_x = pos_0.x + self.dx
-        dest_y = pos_0.y + self.dy
+        # Capture old position before mutating
+        old_x = pos_0.x
+        old_y = pos_0.y
+
+        dest_x = old_x + self.dx
+        dest_y = old_y + self.dy
 
         if not world.realm.in_bounds(dest_x, dest_y):
             return
         tile_id = world.realm.read_tile(dest_x, dest_y)
-        if not world.realm.tiles.get(tile_id).blocks_move:
+        if world.realm.tiles.get(tile_id).blocks_move:
             return
 
         # Move the entity to the new position
@@ -48,11 +52,11 @@ class MovementAction(Action):
         pos_0.y = dest_y
         world.entities.add_component(entity, pos_0)
 
-        # Dispatch an event for the movement
+        # Dispatch an event for the movement with correct old/new positions
         world.event_bus.post(
             EntityMovedEvent(
                 entity=entity,
                 new_position=(dest_x, dest_y),
-                old_position=(pos_0.x, pos_0.y),
+                old_position=(old_x, old_y),
             )
         )

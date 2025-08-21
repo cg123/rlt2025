@@ -23,6 +23,7 @@ class CellularAutomata:
         floor_name: str,
         iterations: int = 4,
         wall_threshold: int = 5,
+        read_from_realm: bool = False,
     ):
         """
         Initialize cellular automata parameters.
@@ -32,11 +33,14 @@ class CellularAutomata:
             floor_name: Name of the floor tile type
             iterations: Number of CA iterations to apply
             wall_threshold: Minimum neighbor walls needed to become/stay wall
+            read_from_realm: If True, read out-of-area neighbors from realm on first iteration.
+                           If False, treat out-of-area as walls (default behavior).
         """
         self.wall_name = wall_name
         self.floor_name = floor_name
         self.iterations = iterations
         self.wall_threshold = wall_threshold
+        self.read_from_realm = read_from_realm
 
     @property
     def id(self) -> str:
@@ -81,11 +85,22 @@ class CellularAutomata:
                             continue  # Don't count center cell
 
                         neighbor_x, neighbor_y = x + dx, y + dy
+
                         # Use current state for consistency within this iteration
                         neighbor_tile = current_state.get((neighbor_x, neighbor_y))
 
-                        # Treat out-of-bounds areas as walls (neighbor_tile is None if out of bounds)
-                        if neighbor_tile is None or neighbor_tile == wall_id:
+                        # Handle out-of-bounds neighbors
+                        if neighbor_tile is None:
+                            # On first iteration with read_from_realm, read from existing realm
+                            if self.read_from_realm and iteration == 0:
+                                neighbor_tile = ctx.procgen.realm.read_tile(
+                                    neighbor_x, neighbor_y, z
+                                )
+                            else:
+                                # Default: treat out-of-bounds as walls
+                                neighbor_tile = wall_id
+
+                        if neighbor_tile == wall_id:
                             wall_count += 1
 
                 # Apply CA rule

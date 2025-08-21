@@ -32,24 +32,42 @@ class Realm:
     def _setup_default_tiles(self):
         """Set up basic tile types for the generation system."""
         self.tiles.register_new(
-            "void", " ", (0, 0, 0), (0, 0, 0), blocks_move=True, blocks_sight=True
+            "void",
+            " ",
+            light_fg=(0, 0, 0),
+            light_bg=(0, 0, 0),
+            dark_fg=(0, 0, 0),
+            dark_bg=(0, 0, 0),
+            blocks_move=True,
+            blocks_sight=True,
         )
         self.tiles.register_new(
             "floor",
             ".",
-            (130, 110, 50),
-            (20, 20, 20),
+            light_fg=(130, 110, 50),
+            light_bg=(50, 50, 50),
+            dark_fg=(50, 50, 50),
+            dark_bg=(20, 20, 20),
             blocks_move=False,
             blocks_sight=False,
         )
         self.tiles.register_new(
-            "wall", "#", (0, 100, 0), (0, 40, 0), blocks_move=True, blocks_sight=True
+            "wall",
+            "#",
+            light_fg=(130, 110, 50),
+            light_bg=(100, 80, 60),
+            dark_fg=(80, 60, 40),
+            dark_bg=(40, 30, 20),
+            blocks_move=True,
+            blocks_sight=True,
         )
         self.tiles.register_new(
             "door",
             "+",
-            (130, 110, 50),
-            (20, 20, 20),
+            light_fg=(139, 69, 19),
+            light_bg=(50, 50, 50),
+            dark_fg=(80, 40, 10),
+            dark_bg=(20, 20, 20),
             blocks_move=False,
             blocks_sight=False,
         )
@@ -69,11 +87,25 @@ class Realm:
                 visible_tiles[x, y] = self.read_tile(x, y)
 
         light_tiles = np.array(
-            [self.tiles.get(tile_id).light for tile_id in visible_tiles.flatten()],
+            [
+                (
+                    ord(self.tiles.get(tile_id).glyph),
+                    self.tiles.get(tile_id).light_fg,
+                    self.tiles.get(tile_id).light_bg,
+                )
+                for tile_id in visible_tiles.flatten()
+            ],
             dtype=SHROUD.dtype,
         ).reshape(visible_tiles.shape)
         dark_tiles = np.array(
-            [self.tiles.get(tile_id).dark for tile_id in visible_tiles.flatten()],
+            [
+                (
+                    ord(self.tiles.get(tile_id).glyph),
+                    self.tiles.get(tile_id).dark_fg,
+                    self.tiles.get(tile_id).dark_bg,
+                )
+                for tile_id in visible_tiles.flatten()
+            ],
             dtype=SHROUD.dtype,
         ).reshape(visible_tiles.shape)
 

@@ -13,8 +13,10 @@ class TileDef:
     id: TileID
     name: str
     glyph: str
-    light: tuple[int, int, int]
-    dark: tuple[int, int, int]
+    light_fg: tuple[int, int, int]
+    light_bg: tuple[int, int, int]
+    dark_fg: tuple[int, int, int]
+    dark_bg: tuple[int, int, int]
     blocks_move: bool = False
     blocks_sight: bool = False
     tags: frozenset[str] = frozenset()
@@ -42,8 +44,10 @@ class TileRegistry:
         self,
         name: str,
         glyph: str,
-        light: tuple[int, int, int],
-        dark: tuple[int, int, int],
+        light_fg: tuple[int, int, int],
+        light_bg: tuple[int, int, int],
+        dark_fg: tuple[int, int, int],
+        dark_bg: tuple[int, int, int],
         blocks_move: bool = False,
         blocks_sight: bool = False,
         tags: frozenset[str] = frozenset(),
@@ -53,8 +57,10 @@ class TileRegistry:
             id=self._next_id,
             name=name,
             glyph=glyph,
-            light=light,
-            dark=dark,
+            light_fg=light_fg,
+            light_bg=light_bg,
+            dark_fg=dark_fg,
+            dark_bg=dark_bg,
             blocks_move=blocks_move,
             blocks_sight=blocks_sight,
             tags=tags,

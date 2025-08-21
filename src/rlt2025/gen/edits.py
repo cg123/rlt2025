@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Callable
 
+from ..components import StableId
 from ..spatial import Vec3
 
 if TYPE_CHECKING:
@@ -15,17 +16,6 @@ class TileWrite:
 
     pos: Vec3
     tile: int  # TileID
-
-
-@dataclass(frozen=True)
-class StableId:
-    """
-    A stable, unique identifier for an entity that persists across saves.
-
-    Used for deferred entity references during procedural generation.
-    """
-
-    guid: str
 
 
 @dataclass

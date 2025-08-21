@@ -1,14 +1,11 @@
 """Pipeline orchestration for procedural generation stages."""
 
+import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from .context import GenContext
 from .edits import Edits
 from .stage import Stage
-
-if TYPE_CHECKING:
-    pass
 
 
 @dataclass
@@ -36,6 +33,13 @@ class Pipeline:
 
         Raises RuntimeError if any stage has unsatisfied dependencies.
         """
+        # Ensure stage IDs are unique for clear diagnostics and caching
+        seen_ids: set[str] = set()
+        for stage in self.stages:
+            if stage.id in seen_ids:
+                raise RuntimeError(f"Duplicate stage id detected: '{stage.id}'")
+            seen_ids.add(stage.id)
+
         satisfied: set[str] = set()
 
         for stage in self.stages:
@@ -66,7 +70,9 @@ class Pipeline:
             # no need to double-check at runtime
 
             # Run the stage
+            logging.debug("Running stage '%s'", stage.id)
             edits = stage.apply(ctx)
+            logging.debug("Stage '%s' produced %d edits", stage.id, len(edits))
 
             # Commit or batch the edits
             if self.batch_commits:
@@ -79,6 +85,11 @@ class Pipeline:
 
         # Commit all batched edits at once
         if self.batch_commits:
+            logging.debug(
+                "Batch committing %d edits across %d stages",
+                len(all_edits),
+                len(self.stages),
+            )
             ctx.procgen.commit(all_edits)
 
     def get_stage_order(self) -> list[str]:

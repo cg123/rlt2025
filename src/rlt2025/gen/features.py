@@ -86,6 +86,7 @@ class Blueprint:
 
         # Add entity spawns with origin offset and resolved GUIDs
         for (rx, ry), spawn in self.entities:
+            # Anchor at blueprint cell; spawn.local_pos may add a local offset at materialization
             world_pos = Vec3(origin.x + rx, origin.y + ry, origin.z)
             stable_guid = make_blueprint_entity_guid(
                 blueprint_instance_id=instance_id,

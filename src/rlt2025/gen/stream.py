@@ -5,7 +5,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ..map.chunks import CHUNK_SIZE, ChunkKey
+from ..map.chunks import CHUNK_DEPTH, CHUNK_SIZE, ChunkKey
 from ..spatial import AABB, Vec3
 from .context import GenContext, ProceduralInterface
 
@@ -96,7 +96,11 @@ class ChunkManager:
         snapped_area = self._snap_area_to_grid(expanded_area)
 
         # Check if we've already generated this region using the snapped coordinates
+        # Include seed and a simple pipeline fingerprint in the key
+        pipeline_fingerprint = tuple(self.pipeline.get_stage_order())
         region_key = (
+            self.seed,
+            pipeline_fingerprint,
             snapped_area.min.x,
             snapped_area.min.y,
             snapped_area.min.z,
@@ -108,6 +112,7 @@ class ChunkManager:
         if region_key in self.generated_regions:
             # Move to end (most recently accessed)
             self.generated_regions.move_to_end(region_key)
+            logging.debug("ChunkManager cache hit for %s", (snapped_area,))
             return  # Already generated
 
         # Check if we need to clean up old regions
@@ -120,10 +125,21 @@ class ChunkManager:
             procgen=self.procgen,
         )
 
+        logging.debug(
+            "ChunkManager generating area %s (expanded=%s, snapped=%s)",
+            area,
+            expanded_area,
+            snapped_area,
+        )
         self.pipeline.run(ctx)
 
         # Mark as generated (OrderedDict will track insertion order)
         self.generated_regions[region_key] = True
+        logging.debug(
+            "ChunkManager cached generated region; cache size now %d/%d",
+            len(self.generated_regions),
+            self.max_cached_regions,
+        )
 
     def interest_aabb(self, center: Vec3, radius_chunks: int) -> AABB:
         """Calculate the area of interest around a center point."""
@@ -179,10 +195,11 @@ class ChunkManager:
         """Get the world coordinate bounds of a chunk."""
         x = chunk_key.cx * self.chunk_size
         y = chunk_key.cy * self.chunk_size
-        z = chunk_key.cz * self.chunk_size
+        z = chunk_key.cz * CHUNK_DEPTH
 
         return AABB(
-            Vec3(x, y, z), Vec3(x + self.chunk_size, y + self.chunk_size, z + 1)
+            Vec3(x, y, z),
+            Vec3(x + self.chunk_size, y + self.chunk_size, z + CHUNK_DEPTH),
         )
 
     def _cleanup_old_regions_if_needed(self) -> None:

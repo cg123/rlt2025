@@ -220,9 +220,13 @@ def test_cellular_automata_double_buffering():
     # Create a simple test pattern that should be affected by double-buffering
     area = AABB(Vec3(0, 0, 0), Vec3(5, 5, 1))
 
+    # Resolve tile IDs via the registry to avoid assumptions about numbering
+    wall_id = world.realm.tiles.id("wall")
+    floor_id = world.realm.tiles.id("floor")
+
     # Set up initial pattern: single wall surrounded by floors
     for x, y in area.iter_xy():
-        tile_id = 1 if (x == 2 and y == 2) else 2  # wall in center, floor elsewhere
+        tile_id = wall_id if (x == 2 and y == 2) else floor_id
         world.realm.write_tile(x, y, 0, tile_id)
 
     # Create CA stage with low threshold so center wall should disappear
@@ -235,9 +239,8 @@ def test_cellular_automata_double_buffering():
     for edit in edits.tiles:
         world.realm.write_tile(edit.pos.x, edit.pos.y, edit.pos.z, edit.tile)
 
-    # Center should now be floor (tile_id 2) since it had < 4 wall neighbors
+    # Center should now be floor since it had < 4 wall neighbors
     center_tile = world.realm.read_tile(2, 2, 0)
-    floor_id = world.realm.tiles.id("floor")
 
     assert center_tile == floor_id, f"Center tile is {center_tile}, expected {floor_id}"
     print("✓ Cellular automata double-buffering test PASSED")

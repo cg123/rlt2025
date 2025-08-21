@@ -2,7 +2,7 @@
 
 import pytest
 
-from rlt2025.map.chunks import CHUNK_SIZE, chunk_to_world, world_to_chunk
+from rlt2025.map.chunks import CHUNK_DEPTH, CHUNK_SIZE, chunk_to_world, world_to_chunk
 
 
 class TestChunkCoordinates:
@@ -95,6 +95,6 @@ class TestChunkCoordinates:
             assert 0 <= ly < CHUNK_SIZE, (
                 f"Local Y {ly} out of bounds for world ({world_x}, {world_y})"
             )
-            assert 0 <= lz < CHUNK_SIZE, (
+            assert 0 <= lz < CHUNK_DEPTH, (
                 f"Local Z {lz} out of bounds for world ({world_x}, {world_y})"
             )

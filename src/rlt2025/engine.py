@@ -7,6 +7,7 @@ from rlt2025.components import Player, Position, Renderable, VisibilityInfo
 from rlt2025.ecs import Entity, World
 from rlt2025.events import AfterFrameRenderEvent, BeforeFrameRenderEvent
 from rlt2025.input_handlers import EventHandler
+from rlt2025.systems.chunk_activation import ChunkActivationSystem
 from rlt2025.systems.visibility import VisibilitySystem
 
 LOG = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class Engine:
         self.world = world
 
         self.sys_visibility = VisibilitySystem(world)
+        self.sys_chunk_activation = ChunkActivationSystem(world)
 
     def handle_tcod_events(self, events: Iterable[Any]) -> None:
         for event in events:

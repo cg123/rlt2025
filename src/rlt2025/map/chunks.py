@@ -31,6 +31,8 @@ class Chunk:
     materialized_entities: set[int] = field(
         default_factory=set
     )  # Track materialized entity IDs
+    # Fast de-duplication of spawns across re-generation passes
+    spawn_guids: set[str] = field(default_factory=set)
 
     def __post_init__(self):
         """Initialize tiles array if empty."""

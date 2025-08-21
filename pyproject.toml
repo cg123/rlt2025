@@ -4,10 +4,13 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = ["tcod>=19.3.0"]
+dependencies = ["tcod>=19.3.0", "PyYAML>=6.0"]
 
 [dependency-groups]
 dev = ["ruff>=0.12.7", "pytest>=8.4.1"]
+
+#[project.optional-dependencies]
+#procgen = ["PyYAML>=6.0"]
 
 [build-system]
 requires = ["uv_build>=0.8.4,<0.9.0"]

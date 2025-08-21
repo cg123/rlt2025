@@ -46,9 +46,9 @@ class NoiseTerrain:
         # Simple hash-based noise for demonstration
         # In a real implementation, you'd use proper noise libraries like OpenSimplex
         for x, y in ctx.area.iter_xy():
-            # Create deterministic but pseudo-random noise value
+            # Create deterministic but pseudo-random noise value without using hash()
             noise_input = (x * 73856093) ^ (y * 19349663) ^ ctx.world_seed
-            noise_value = (hash(noise_input) & 0xFFFFFFFF) / 0xFFFFFFFF
+            noise_value = (noise_input & 0xFFFFFFFF) / 0xFFFFFFFF
 
             # Find the appropriate tile for this noise value
             tile_name = self.thresholds[-1][1]  # Default to last threshold
